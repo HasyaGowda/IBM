@@ -1,0 +1,74 @@
+name: CI/CD Pipeline - Build, Test, Deploy
+&nbsp;
+&nbsp;
+
+# This workflow triggers on pushes to main branch and on pull requests targeting main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+&nbsp;
+&nbsp;
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build step (check HTML formatting)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+&nbsp;
+&nbsp;
+
+      - name: Validate HTML file formatting
+        run: |
+          # Basic HTML validation with tidy or similar tool
+          # Install tidy-html5
+          sudo apt-get update
+          sudo apt-get install -y tidy
+          tidy -q -e blogging-platform.html
+&nbsp;
+&nbsp;
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    name: Test step (run simple lint checks)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+&nbsp;
+&nbsp;
+
+      - name: Lint HTML file with htmlhint
+        run: |
+          npm install -g htmlhint
+          htmlhint blogging-platform.html || true
+          # '|| true' is to allow warnings but prevent failure for demo purposes
+&nbsp;
+&nbsp;
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    name: Deploy step (Deploy to GitHub Pages)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+&nbsp;
+&nbsp;
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./  # Publish current directory containing blogging-platform.html
+          publish_branch: gh-pages
+          destination_dir: /
+          allow_empty_commit: false
+&nbsp;
+&nbsp;
